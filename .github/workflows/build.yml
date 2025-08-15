@@ -1,0 +1,37 @@
+name: Test Build Timing
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build matrix ${{ matrix.debian_release }} x ${{ matrix.platform }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    strategy:
+      matrix:
+        debian_release: [bookworm, trixie]
+        platform: [linux/amd64, linux/arm64]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup QEMU (only for arm64)
+        uses: docker/setup-qemu-action@v3
+
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          push: false
+          no-cache: true
+          tags: test:local
+          build-args: |
+            DEBIAN_RELEASE=${{ matrix.debian_release }}
+
